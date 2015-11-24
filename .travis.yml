@@ -18,4 +18,4 @@ install:
   - stack build --only-dependencies
 
 script:
-  - stack build --test --bench
+  - stack build
