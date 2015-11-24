@@ -65,7 +65,7 @@ newConn :: MonadIO m => ByteString -> m Conn
 newConn databaseUrl = do
   connectionPool <- liftIO $ newMVar []
   return Conn
-    { _connDatabaseUrl = databaseUrl
+    { _connDatabaseUrl    = databaseUrl
     , _connConnectionPool = connectionPool
     }
 
