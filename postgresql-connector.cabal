@@ -17,10 +17,13 @@ library
   exposed-modules:     Database.PostgreSQL.Connector
   ghc-options:         -Wall
   build-depends:       base >= 4.7 && < 5
+                     , bytestring
+                     , exceptions
                      , lens
                      , mtl
                      , postgresql-simple
                      , resourcet
+                     , stm
                      , transformers-base
   default-language:    Haskell2010
 
