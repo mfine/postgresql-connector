@@ -1,0 +1,6 @@
+resolver: lts-3.15
+packages:
+- '.'
+flags: {}
+extra-deps:
+- postgresql-connector-0.2.0
