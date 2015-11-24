@@ -1,4 +1,4 @@
-# [Template][postgresql-connector-github]
+# [postgresql-connector][postgresql-connector-github]
 
 [![Package version][postgresql-connector-hackage-img]][postgresql-connector-hackage]
 [![Build status][postgresql-connector-travis-img]][postgresql-connector-travis]
