@@ -74,8 +74,8 @@ runConnectorT e (ConnectorT m) = runReaderT m e
 
 connect :: MonadConnector e m => m PG.Connection
 connect = do
-  connectionPool <- view connConnectionPool
   databaseUrl    <- view connDatabaseUrl
+  connectionPool <- view connConnectionPool
   liftIO $ modifyMVar connectionPool $ \connectionPool' ->
     case connectionPool' of
       (connection:connections) -> return (connections, connection)
