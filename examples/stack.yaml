@@ -3,4 +3,4 @@ packages:
 - '.'
 flags: {}
 extra-deps:
-- postgresql-connector-0.2.0
+- postgresql-connector-0.2.2
