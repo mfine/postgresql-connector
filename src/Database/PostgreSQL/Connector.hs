@@ -13,9 +13,24 @@
 --
 -- PG Connector.
 
-module Database.PostgreSQL.Connector where
+module Database.PostgreSQL.Connector
+  ( ConnectorT (..)
+  , Conn (..)
+  , MonadConnector
+  , ConnInfo (..)
+  , runConnectorT
+  , newConn
+  , newConnInfo
+  , withConnection
+  , withTransaction
+  , query
+  , query_
+  , execute
+  , executeMany
+  , execute_
+  , returning
+  ) where
 
-import           Control.Concurrent
 import           Control.Lens
 import           Control.Monad.Base
 import           Control.Monad.Catch
@@ -23,6 +38,8 @@ import           Control.Monad.Reader
 import           Control.Monad.Trans.Resource
 import           Data.ByteString
 import           Data.Int
+import           Data.Pool
+import           Data.Time
 import qualified Database.PostgreSQL.Simple as PG
 
 newtype ConnectorT e m a = ConnectorT
@@ -46,9 +63,8 @@ instance MonadTrans (ConnectorT r) where
 instance MonadResource m => MonadResource (ConnectorT r m) where
   liftResourceT = lift . liftResourceT
 
-data Conn = Conn
-  { _connDatabaseUrl    :: ByteString
-  , _connConnectionPool :: MVar [PG.Connection]
+newtype Conn = Conn
+  { _cConnectionPool :: Pool PG.Connection
   }
 
 $(makeClassy ''Conn)
@@ -61,36 +77,49 @@ type MonadConnector e m =
   , HasConn     e
   )
 
-newConn :: MonadIO m => ByteString -> m Conn
-newConn databaseUrl = do
-  connectionPool <- liftIO $ newMVar []
-  return Conn
-    { _connDatabaseUrl    = databaseUrl
-    , _connConnectionPool = connectionPool
-    }
+data ConnInfo = ConnInfo
+  { _ciDatabaseUrl :: ByteString
+  , _ciStripes     :: Int
+  , _ciConnections :: Int
+  , _ciIdleTime    :: NominalDiffTime
+  } deriving ( Eq, Show )
+
+$(makeLenses ''ConnInfo)
 
 runConnectorT :: HasConn e => e -> ConnectorT e m a -> m a
 runConnectorT e (ConnectorT m) = runReaderT m e
 
-connect :: MonadConnector e m => m PG.Connection
-connect = do
-  databaseUrl    <- view connDatabaseUrl
-  connectionPool <- view connConnectionPool
-  liftIO $ modifyMVar connectionPool $ \connectionPool' ->
-    case connectionPool' of
-      (connection:connections) -> return (connections, connection)
-      [] -> do
-        connection <- PG.connectPostgreSQL databaseUrl
-        return ([], connection)
+newConn :: MonadIO m => ConnInfo -> m Conn
+newConn ci =
+  liftIO $ Conn <$> createPool
+    (PG.connectPostgreSQL (ci ^. ciDatabaseUrl))
+    PG.close
+    (ci ^. ciStripes)
+    (ci ^. ciIdleTime)
+    (ci ^. ciConnections)
 
-restore :: MonadConnector e m => PG.Connection -> m ()
-restore connection = do
-  connectionPool <- view connConnectionPool
-  liftIO $ modifyMVar_ connectionPool $ \connectionPool' ->
-    return $ connection:connectionPool'
+newConnInfo :: ByteString -> ConnInfo
+newConnInfo databaseUrl =
+  ConnInfo
+    { _ciDatabaseUrl = databaseUrl
+    , _ciStripes     = 1
+    , _ciConnections = 2
+    , _ciIdleTime    = 300
+    }
+
+connect :: MonadConnector e m => m (PG.Connection, LocalPool PG.Connection)
+connect = do
+  connectionPool <- view cConnectionPool
+  liftIO $ takeResource connectionPool
+
+restore :: MonadConnector e m => PG.Connection -> LocalPool PG.Connection -> m ()
+restore connection connectionPool =
+  liftIO $ putResource connectionPool connection
 
 withConnection :: MonadConnector e m => (PG.Connection -> m a) -> m a
-withConnection = bracket connect restore
+withConnection action =
+  bracket connect (uncurry restore) $ uncurry $ \connection _connectionPool ->
+    action connection
 
 withTransaction :: MonadConnector e m => IO a -> m a
 withTransaction action =
