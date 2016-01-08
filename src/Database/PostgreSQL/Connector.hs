@@ -16,6 +16,7 @@
 module Database.PostgreSQL.Connector
   ( ConnectorT (..)
   , Conn (..)
+  , HasConn (..)
   , MonadConnector
   , ConnInfo (..)
   , runConnectorT
