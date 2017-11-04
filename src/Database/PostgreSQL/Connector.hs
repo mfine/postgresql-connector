@@ -41,7 +41,7 @@ import           Data.ByteString
 import           Data.Int
 import           Data.Pool
 import           Data.Time
-import qualified Database.PostgreSQL.Simple as PG
+import qualified Database.PostgreSQL.Simple   as PG
 
 newtype ConnectorT e m a = ConnectorT
   { unConnectorT :: ReaderT e m a
