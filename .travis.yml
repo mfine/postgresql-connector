@@ -21,7 +21,7 @@ before_install:
 install:
   - stack update
   - stack setup
-  - stack install hlint
+  - stack install hlint weeder
 
 script:
   - ./Shakefile.hs sanity
