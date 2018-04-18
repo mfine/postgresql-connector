@@ -22,7 +22,7 @@ install:
   - stack config set system-ghc --global true
 
 before_script: rm -rf .build
-script: ./Shakefile.hs build-error
+script: ./Shakefile.hs build-error lint
 
 env:
   global:
