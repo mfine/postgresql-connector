@@ -20,6 +20,7 @@ before_install: mkdir -p $HOME/.local/bin
 install:
   - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
   - stack config set system-ghc --global true
+  - stack install hlint
 
 before_script: rm -rf .build
 script: ./Shakefile.hs build-error lint
