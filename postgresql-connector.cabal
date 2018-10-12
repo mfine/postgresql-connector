@@ -1,5 +1,5 @@
 name:                  postgresql-connector
-version:               0.2.5
+version:               0.2.7
 synopsis:              Initial project postgresql-connector from stack
 description:           Please see README.md
 homepage:              http://github.com/mfine/postgresql-connector
